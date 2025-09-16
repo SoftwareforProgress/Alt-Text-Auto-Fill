@@ -15,12 +15,13 @@ jobs:
 
         steps:
             - name: Checkout code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Setup Node.js
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
-                  node-version: "18"
+                  node-version: "20"
+                  cache: "npm"
 
             - name: Install dependencies
               run: npm ci
@@ -28,22 +29,24 @@ jobs:
             - name: Create extension package
               run: npm run package
 
-            - name: Upload artifact
-              uses: actions/upload-artifact@v3
+            - name: Upload extension ZIP
+              uses: actions/upload-artifact@v4
               with:
                   name: alt-text-auto-fill-extension
                   path: dist/alt-text-auto-fill.zip
+                  if-no-files-found: error
 
             - name: Upload unpacked extension
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: alt-text-auto-fill-unpacked
                   path: dist/unpacked/
+                  if-no-files-found: error
 
             # Create release if this is a tag push
             - name: Create Release
               if: startsWith(github.ref, 'refs/tags/')
-              uses: softprops/action-gh-release@v1
+              uses: softprops/action-gh-release@v2
               with:
                   files: |
                       dist/alt-text-auto-fill.zip
@@ -71,12 +74,13 @@ jobs:
 
         steps:
             - name: Checkout code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Setup Node.js
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
-                  node-version: "18"
+                  node-version: "20"
+                  cache: "npm"
 
             - name: Install dependencies
               run: npm ci
