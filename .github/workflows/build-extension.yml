@@ -1,0 +1,88 @@
+name: Build and Package Extension
+
+on:
+    push:
+        branches: [main]
+        tags:
+            - "v*"
+    pull_request:
+        branches: [main]
+    workflow_dispatch:
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "18"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Create extension package
+              run: npm run package
+
+            - name: Upload artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  name: alt-text-auto-fill-extension
+                  path: dist/alt-text-auto-fill.zip
+
+            - name: Upload unpacked extension
+              uses: actions/upload-artifact@v3
+              with:
+                  name: alt-text-auto-fill-unpacked
+                  path: dist/unpacked/
+
+            # Create release if this is a tag push
+            - name: Create Release
+              if: startsWith(github.ref, 'refs/tags/')
+              uses: softprops/action-gh-release@v1
+              with:
+                  files: |
+                      dist/alt-text-auto-fill.zip
+                      dist/alt-text-auto-fill-source.zip
+                  draft: false
+                  prerelease: false
+                  body: |
+                      ## Alt Text Auto-Fill Chrome Extension
+                      By Software for Progress Foundation
+
+                      ### Installation Instructions
+                      1. Download `alt-text-auto-fill.zip`
+                      2. Extract the ZIP file
+                      3. Open Chrome and go to `chrome://extensions/`
+                      4. Enable "Developer mode"
+                      5. Click "Load unpacked" and select the extracted folder
+
+                      ### What's New
+                      See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "18"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Run tests
+              run: npm test
+
+            - name: Validate manifest
+              run: npm run validate-manifest
