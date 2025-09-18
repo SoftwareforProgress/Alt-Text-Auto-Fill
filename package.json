@@ -1,25 +1,23 @@
 {
     "name": "alt-text-auto-fill",
-    "version": "1.0.0",
-    "description": "Automatically generates alt text for images to improve web accessibility",
+    "version": "1.1.0",
+    "description": "AI-powered alt text generation for web accessibility",
     "author": "Software for Progress Foundation",
     "license": "MIT",
     "scripts": {
-        "package": "npm run build && npm run zip",
-        "build": "npm run clean && npm run copy-files",
+        "install-deps": "npm install",
+        "build": "webpack --mode production",
+        "dev": "webpack --mode development --watch",
         "clean": "rm -rf dist",
-        "copy-files": "mkdir -p dist/unpacked && cp -r src/* dist/unpacked/",
-        "zip": "cd dist/unpacked && zip -r ../alt-text-auto-fill.zip * && cd ../.. && zip -r dist/alt-text-auto-fill-source.zip src scripts package.json README.md",
-        "validate-manifest": "node scripts/validate-manifest.js",
-        "test": "echo 'No tests specified yet'",
-        "watch": "nodemon --watch src --exec npm run build"
+        "package": "npm run build && cd dist && zip -r ../alt-text-auto-fill.zip *"
+    },
+    "dependencies": {
+        "@tensorflow/tfjs": "^4.11.0",
+        "@tensorflow-models/coco-ssd": "^2.2.3"
     },
     "devDependencies": {
-        "canvas": "^2.11.2",
-        "nodemon": "^3.0.1"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/SoftwareforProgress/Alt-Text-Auto-Fill"
+        "webpack": "^5.89.0",
+        "webpack-cli": "^5.1.4",
+        "copy-webpack-plugin": "^11.0.0"
     }
 }

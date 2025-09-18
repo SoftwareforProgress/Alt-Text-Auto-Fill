@@ -1,10 +1,10 @@
 {
     "manifest_version": 3,
     "name": "Alt Text Auto-Fill",
-    "version": "1.0.0",
-    "description": "Automatically generates alt text for images to improve web accessibility. By Software for Progress Foundation.",
+    "version": "1.1.0",
+    "description": "AI-powered alt text generation for web accessibility. By Software for Progress Foundation.",
     "author": "Software for Progress Foundation",
-    "homepage_url": "https://softwareforprogress.org",
+    "homepage_url": "https://github.com/SoftwareforProgress/Alt-Text-Auto-Fill",
     "permissions": ["activeTab", "storage", "contextMenus"],
     "host_permissions": ["<all_urls>"],
     "background": {
@@ -15,7 +15,7 @@
             "matches": ["<all_urls>"],
             "js": ["content.js"],
             "css": ["styles.css"],
-            "run_at": "document_idle"
+            "run_at": "document_end"
         }
     ],
     "action": {
