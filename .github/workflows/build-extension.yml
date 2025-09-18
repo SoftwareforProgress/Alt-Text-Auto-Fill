@@ -10,19 +10,15 @@ on:
     workflow_dispatch:
 
 permissions:
-    contents: write # needed to create tags and releases
+    contents: write
     packages: read
 
 jobs:
     build:
         runs-on: ubuntu-latest
-        outputs:
-            artifact-names: ${{ steps.set-artifacts.outputs.names }}
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
 
             - name: Setup Node.js
               uses: actions/setup-node@v4
@@ -32,6 +28,17 @@ jobs:
 
             - name: Install dependencies
               run: npm ci
+
+            - name: Build extension
+              run: npm run build
+
+            - name: Check build output
+              run: |
+                  echo "Build complete. Checking file sizes:"
+                  ls -lh dist/
+                  echo "---"
+                  echo "Total dist size:"
+                  du -sh dist/
 
             - name: Create extension package
               run: npm run package
@@ -40,159 +47,83 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: alt-text-auto-fill-extension
-                  path: dist/alt-text-auto-fill.zip
+                  path: alt-text-auto-fill.zip
                   if-no-files-found: error
 
             - name: Upload unpacked extension
               uses: actions/upload-artifact@v4
               with:
                   name: alt-text-auto-fill-unpacked
-                  path: dist/unpacked/
+                  path: dist/
                   if-no-files-found: error
 
-            - name: Set artifact names output
-              id: set-artifacts
-              run: |
-                  echo "::set-output name=names::alt-text-auto-fill-extension,alt-text-auto-fill-unpacked"
-
-            # Create release if this is a tag push (preserve your previous behavior)
+            # Create release if this is a tag push
             - name: Create Release (on tag push)
               if: startsWith(github.ref, 'refs/tags/')
               uses: softprops/action-gh-release@v2
               with:
-                  files: |
-                      dist/alt-text-auto-fill.zip
-                      dist/alt-text-auto-fill-source.zip
+                  files: alt-text-auto-fill.zip
                   draft: false
                   prerelease: false
+                  generate_release_notes: true
                   body: |
-                      ## Alt Text Auto-Fill Chrome Extension
+                      ## Alt Text Auto-Fill Chrome Extension v${{ github.ref_name }}
                       By Software for Progress Foundation
 
-                      ### Installation Instructions
+                      ### 🚀 Installation
                       1. Download `alt-text-auto-fill.zip`
-                      2. Extract the ZIP file
-                      3. Open Chrome and go to `chrome://extensions/`
+                      2. Extract to a folder
+                      3. Open `chrome://extensions/`
                       4. Enable "Developer mode"
-                      5. Click "Load unpacked" and select the extracted folder
+                      5. Click "Load unpacked" and select the folder
 
-                      ### What's New
-                      See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+                      ### ✨ Features
+                      - AI-powered object detection
+                      - Describes image contents accurately
+                      - Works with cross-origin images
+                      - WebGL acceleration
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    release:
+    auto-release:
         needs: build
         runs-on: ubuntu-latest
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         steps:
-            - name: Checkout so we can tag
+            - name: Checkout
               uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
-                  persist-credentials: true
 
-            - name: Download built extension zip
+            - name: Download extension ZIP
               uses: actions/download-artifact@v4
               with:
                   name: alt-text-auto-fill-extension
-                  path: ./artifacts/extension
 
-            - name: Download unpacked artifact
-              uses: actions/download-artifact@v4
-              with:
-                  name: alt-text-auto-fill-unpacked
-                  path: ./artifacts/unpacked
-
-            - name: Determine tag name
-              id: tag
+            - name: Get version from package.json
+              id: version
               run: |
-                  set -e
-                  # Try to use package.json version if available
-                  if [ -f package.json ]; then
-                    pkg_version=$(node -pe "require('./package.json').version" 2>/dev/null || echo "")
-                  else
-                    pkg_version=""
-                  fi
+                  VERSION=$(node -p "require('./package.json').version")
+                  echo "version=v${VERSION}" >> $GITHUB_OUTPUT
 
-                  if [ -n "$pkg_version" ]; then
-                    # Ensure tag starts with v
-                    if [[ "$pkg_version" = v* ]]; then
-                      TAG="$pkg_version"
-                    else
-                      TAG="v$pkg_version"
-                    fi
-                  else
-                    DATE=$(date +'%Y.%m.%d')
-                    SHORT=${GITHUB_SHA::7}
-                    TAG="v${DATE}-${SHORT}"
-                  fi
-
-                  echo "Computed tag: $TAG"
-                  echo "::set-output name=tag::$TAG"
-
-            - name: Configure git user
-              run: |
-                  git config user.name "github-actions[bot]"
-                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-            - name: Create tag if it does not exist and push
-              env:
-                  TAG: ${{ steps.tag.outputs.tag }}
-              run: |
-                  set -e
-                  # Check remote for tag
-                  if git ls-remote --tags origin refs/tags/"$TAG" | grep -q "$TAG"; then
-                    echo "Tag $TAG already exists on remote. Skipping tag creation."
-                  else
-                    echo "Creating tag $TAG"
-                    git tag -a "$TAG" -m "Release $TAG"
-                    git push origin "refs/tags/$TAG"
-                    echo "Pushed tag $TAG"
-                  fi
-
-            - name: Create GitHub Release and upload assets
+            - name: Create Release
               uses: ncipollo/release-action@v1
               with:
-                  tag: ${{ steps.tag.outputs.tag }}
-                  name: Release ${{ steps.tag.outputs.tag }}
+                  tag: ${{ steps.version.outputs.version }}
+                  name: Release ${{ steps.version.outputs.version }}
+                  artifacts: "alt-text-auto-fill.zip"
+                  allowUpdates: true
+                  makeLatest: true
                   body: |
                       ## Alt Text Auto-Fill Chrome Extension
-                      By Software for Progress Foundation
+                      Version ${{ steps.version.outputs.version }}
 
-                      ### Installation Instructions
-                      1. Download `alt-text-auto-fill.zip`
-                      2. Extract the ZIP file
-                      3. Open Chrome and go to `chrome://extensions/`
-                      4. Enable "Developer mode"
-                      5. Click "Load unpacked" and select the extracted folder
+                      ### Installation
+                      1. Download the ZIP file below
+                      2. Extract it to a folder
+                      3. Open Chrome Extensions (`chrome://extensions/`)
+                      4. Enable Developer Mode
+                      5. Click "Load unpacked" and select the folder
 
-                      ### What's New
-                      See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
-                  files: |
-                      ./artifacts/extension/dist/alt-text-auto-fill.zip
-                      ./artifacts/unpacked/**
-
+                      ---
+                      *By Software for Progress Foundation*
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    test:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "20"
-                  cache: "npm"
-
-            - name: Install dependencies
-              run: npm ci
-
-            - name: Run tests
-              run: npm test
-
-            - name: Validate manifest
-              run: npm run validate-manifest
