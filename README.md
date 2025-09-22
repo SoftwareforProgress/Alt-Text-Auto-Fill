@@ -24,7 +24,10 @@ Automatically generates and fills missing alt text for images to improve web acc
 
 ## Installation
 
-### Option 1: Download Latest Release
+### Option 1: [Download From Chrome Store]([https://github.com/SoftwareforProgress/Alt-Text-Auto-Fill/releases](https://chromewebstore.google.com/detail/alt-text-auto-fill/ldgghfoheoipmffiidhcgjgnhmjnmkpc
+))
+
+### Option 2: Download Latest Release
 
 1. Go to [Releases](https://github.com/SoftwareforProgress/Alt-Text-Auto-Fill/releases)
 2. Download `alt-text-auto-fill.zip`
@@ -33,7 +36,7 @@ Automatically generates and fills missing alt text for images to improve web acc
 5. Enable "Developer mode"
 6. Click "Load unpacked" and select the extracted folder
 
-### Option 2: Build from Source
+### Option 3: Build from Source
 
 ```bash
 git clone https://github.com/SoftwareforProgress/Alt-Text-Auto-Fill.git
